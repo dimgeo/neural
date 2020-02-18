@@ -36,7 +36,7 @@ log=: (^1)&^.
 tanh=: 7&o.
 NB. sigmoid=: 3 : '% (>: ^(-y))'
 sigmoid=: %@: (>: @:( ^@:-)) 
-rando=:  (<:@+:@?) 
+random=:  (<:@+:@?) 
 relu=:  >.&0
 abs =: + ` - @. (< & 0)
 mean=. (+/ % #) 
@@ -44,7 +44,7 @@ var=: (+/@(*:@(] - +/ % #)) % #)"1
 sdev=:  %:@var"1
 deepfix=: *%:@%@#@|:
 sumsquare=:  +/@:( +/ @: *:)
-
+softmax =:  (% +/)@:^
 
 
 NB. ==========================================================
@@ -81,7 +81,7 @@ NB. ==========================================================
 NB. Currently only RMSprop optimizatoin is implemented by default in backprop
 
 L=: 3 3 2 1			NB. Architecture, e.g. list of layers and nodes
-alpha =: 0.002 			NB. learning rate
+alpha =: 0.001 			NB. learning rate
 decay=: 1.0001                  NB. not used atm
 lambda =: 0 			NB. regularization parameter
 beta1=: 0.9                     NB. weighted average parameter for momentum  
@@ -107,7 +107,7 @@ init=: 3 : 0
 i=. 1}. i. #L
 j=.  i. (#L)-1
 index=. i,.j
-Wparams=:  deepfix each rando each 0 $ ~ each <"1 index { L
+Wparams=:  deepfix each random each 0 $ ~ each <"1 index { L
 bparams=:    0   $ ~  each      # each Wparams
 l=.1
 
