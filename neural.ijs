@@ -34,7 +34,8 @@ u=: (,":)
 exp =: (^1)&^
 log=: (^1)&^.
 tanh=: 7&o.
-sigmoid=: 3 : '% (>: ^(-y))'  
+NB. sigmoid=: 3 : '% (>: ^(-y))'
+sigmoid=: %@: (>: @:( ^@:-)) 
 rando=:  (<:@+:@?) 
 relu=:  >.&0
 abs =: + ` - @. (< & 0)
@@ -42,7 +43,7 @@ mean=. (+/ % #)
 var=: (+/@(*:@(] - +/ % #)) % #)"1
 sdev=:  %:@var"1
 deepfix=: *%:@%@#@|:
-sumsquare=: 3 : '+/ +/  *: y'
+sumsquare=:  +/@:( +/ @: *:)
 
 
 
@@ -60,7 +61,12 @@ X=: _1}. X              	NB. Remove last row from X keeping only features
 Y=: Y> 0.6	           	NB. Set Y labels to 1 when Y>0.8  
 Y=: (1, #Y) $, Y        	NB. Convert Y[n] to Y[1 n]
 
-NB. Normalization 
+
+NB. ==========================================================
+NB.			Normalization
+NB. ==========================================================
+
+
 mx=: mean"1 X 
 sx=: sdev X
 X =: (X - mx) % *: sx
@@ -72,9 +78,14 @@ NB. ==========================================================
 NB.			(Hyper) parameters
 NB. ==========================================================
 
+NB. Currently only RMSprop optimizatoin is implemented by default in backprop
+
 L=: 3 3 2 1			NB. Architecture, e.g. list of layers and nodes
-alpha =: 0.01 			NB. learning rate
-lambda =: 2 			NB. regularization parameter
+alpha =: 0.002 			NB. learning rate
+decay=: 1.0001                  NB. not used atm
+lambda =: 0 			NB. regularization parameter
+beta1=: 0.9                     NB. weighted average parameter for momentum  
+beta2=: 0.999                   NB. weighted average parameter for rmsprop  
 
 NB. TODO
 NB. momentum
@@ -98,6 +109,23 @@ j=.  i. (#L)-1
 index=. i,.j
 Wparams=:  deepfix each rando each 0 $ ~ each <"1 index { L
 bparams=:    0   $ ~  each      # each Wparams
+l=.1
+
+
+NB. Momentum, RMSprop initialization
+
+while. l < #L-1 do.
+('VdW' u l) =: > 0= each (l-1){Wparams
+('Vdb' u l) =: > 0= each (l-1){bparams
+('SdW' u l) =: > 0= each (l-1){Wparams
+('Sdb' u l) =: > 0= each (l-1){bparams
+
+
+l=. >:l
+end.
+
+
+
 Wparams
 )
 
@@ -136,16 +164,57 @@ NB. ==========================================================
 backwardprop =: monad define
 maxL=. #L
 l=. maxL-1
-('dZ' u l )  =: m % ~ (". 'A' u l ) - Y 
+
+('dZ' u l )  =: m % ~ (". 'A' u l ) - Y
 while. l > 0 do.
+
+NB. ==========================================================
+NB.			basic backprop
+NB. ==========================================================
+
 ('dW' u l )  =:   ((". 'dZ' u l ) +/ . * (|: ". 'A' u (l-1) ) ) + (m % ~ lambda * > (l-1) {Wparams)
 ('db' u l )  =:  +/"1 (". 'dZ' u l )
-Wparams=: (<((>(l-1){ Wparams) -(alpha * ". 'dW' u l))) (l-1) } Wparams
-bparams=: (<((>(l-1){ bparams) -(alpha *  ". 'db' u l))) (l-1) } bparams
+
+NB. ==========================================================
+NB.			momentum optimzation
+NB. ==========================================================
+
+NB. ('VdW' u l ) =:   ((1-beta1) * (". 'dW' u l)) + beta1 * (". 'VdW' u l)
+NB.  ('Vdb' u l ) =:  ((1-beta1) * (". 'db' u l)) + beta1 * (". 'Vdb' u l)
+
+NB. ==========================================================
+NB.			RMSprop optimization
+NB. ==========================================================
+
+('SdW' u l ) =:  ((1-beta2) * (*: ". 'dW' u l)) + beta2 * (". 'SdW' u l)
+('Sdb' u l ) =: ((1-beta2) * (*: ". 'db' u l)) + beta2 * (". 'Sdb' u l)
+
+NB. ==========================================================
+NB.			update w/ rmsprop
+NB. ==========================================================
+
+Wparams=: (<((>(l-1){ Wparams) -((% %: ". 'SdW' u l)  * alpha * ". 'dW' u l))) (l-1) } Wparams
+bparams=: (<((>(l-1){ bparams) -((% %: ". 'Sdb' u l) * alpha *  ". 'db' u l))) (l-1) } bparams
+
+NB. ==========================================================
+NB.			update w/ momentum
+NB. ==========================================================
+
+NB. Wparams=: (<((>(l-1){ Wparams) -(alpha * ". 'VdW' u l))) (l-1) } Wparams
+NB. bparams=: (<((>(l-1){ bparams) -(alpha *  ". 'Vdb' u l))) (l-1) } bparams
+
+NB. ==========================================================
+NB.			update basic
+NB. ==========================================================
+NB. Wparams=: (<((>(l-1){ Wparams) -(alpha * ". 'dW' u l))) (l-1) } Wparams
+NB. bparams=: (<((>(l-1){ bparams) -(alpha *  ". 'db' u l))) (l-1) } bparams
+
 l=. <: l
+
 if. l > 0 do. 
-('dZ' u l )  =: ((|: ". 'Wca' u (l+1)) +/ . *  (". 'dZ' u (l+1))) * 0<: (". 'Zca' u l)  
+    ('dZ' u l )  =: ((|: ". 'Wca' u (l+1)) +/ . *  (". 'dZ' u (l+1))) * 0<: (". 'Zca' u l)  
 end.
+
 end.
 )
 
@@ -169,7 +238,6 @@ counter=.y
 maxL=.#L-1
 cfl=:0
 while. counter > 0 do.
-
 counter =. <: counter
 forwardprop X
 costfunction ". ('A' u maxL-1) 
