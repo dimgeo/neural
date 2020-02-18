@@ -15,7 +15,7 @@ init ''
 
 learn [number of iterations]
 
-You can use learn to train the neural network using a training set, e.g. X in this code. After training you can use a X2 test to check how well the network performs. 
+You can use learn to train the neural network using a training set, e.g. X in this code. After training you can use a X2 set to check how well the network performs. 
 
 
 Parameters
@@ -46,5 +46,5 @@ Included data.csv is for testing if everything works only. You can use your own 
 TODO
 ----
 
-Future versions will include some auto-optimization functions, checks for bias and variance using cross validation sets and other improvements.
+Future versions will include some auto-optimization functions like RMSprop, momentum and Adam, checks for bias and variance using cross validation sets and other improvements. 
 
