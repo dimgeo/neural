@@ -55,10 +55,11 @@ NB. TODO cleanup
 NB. Use a csv file with X in the first columns and Y in the last column
 
 data=: readcsv 'data.csv'       NB. Assumes vertical feature columns with last column output data x1,x2,x3...y
-X=: |: ".  > }. data  	        NB. get rid of the headers and convert into number matrix with horizontally stacked features
-Y=: _1{ X               	NB. Y becomes the last row of X
-X=: _1}. X              	NB. Remove last row from X keeping only features
-Y=: Y> 0.6	           	NB. Set Y labels to 1 when Y>0.8  
+X=: |: ".  > }. data  	        NB. get rid of the headers and convert into number matrix with vertically stacked features
+				NB.    e.g. (4 200 $) represents 200 samples with 4 features for each sample
+Y=: _1{ X               	NB. Copy last row of X into Y
+X=: _1}. X              	NB. Remove last row from X, keeping only features
+Y=: Y> 0.6	           	NB. Set Y labels to 1 when Y>0.6  
 Y=: (1, #Y) $, Y        	NB. Convert Y[n] to Y[1 n]
 
 
@@ -78,7 +79,7 @@ NB. ==========================================================
 NB.			(Hyper) parameters
 NB. ==========================================================
 
-NB. Currently only RMSprop optimizatoin is implemented by default in backprop
+NB. Currently only RMSprop optimization is implemented by default in backprop
 
 L=: 3 3 2 1			NB. Architecture, e.g. list of layers and nodes
 alpha =: 0.001 			NB. learning rate
