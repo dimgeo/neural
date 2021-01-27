@@ -3,7 +3,7 @@ NB.
 NB.			L-size neural network  
 NB. 
 NB. ==========================================================
-NB. Dimitri Georganas, Biodys BV http://www.biodys.com
+NB.
 NB. ==========================================================
 
 NB. Usage:
