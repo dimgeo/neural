@@ -4,7 +4,7 @@ Multi-layer neural network in J
 Installation
 ------------
 
-You need the J programming language to run this code. Download and install J at http://www.jsoftware.com
+You need the J programming language to run this code. Download and install J from http://www.jsoftware.com
 Then download neural.ijs and data.csv or clone the repository.
 
 Use
